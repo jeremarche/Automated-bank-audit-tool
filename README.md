@@ -19,3 +19,17 @@ Prototipo de herramienta de auditoría interna automatizada desarrollada en Pyth
    Ejecutá el script generador para crear el archivo del libro mayor simulado (`transacciones_banco.csv`):
    ```bash
    python generador_datos.py
+
+## 📊 Ejemplo de Informe Generado (Output)
+Cuando el script procesa el libro mayor, devuelve automáticamente un reporte como el siguiente:
+
+```text
+--- INFORME DE AUDITORÍA INTERNA AUTOMATIZADA ---
+Archivo analizado: transacciones_banco.csv
+Total de transacciones revisadas: 500
+
+[!] Alerta 1: Se encontraron 4 posibles errores o descuadres contables:
+[!] Alerta 2: Se encontraron 4 movimientos sospechosos en Caja Chica (montos excesivos):
+[!] Alerta 3: Se detectaron 5 transacciones fuera de horario laboral (Riesgo de seguridad/fraude):
+[!] Alerta 4: Se detectaron 2 registros con IDs de transacción duplicados:
+--- FIN DEL INFORME DE AUDITORÍA ---
