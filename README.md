@@ -33,3 +33,5 @@ Total de transacciones revisadas: 500
 [!] Alerta 3: Se detectaron 5 transacciones fuera de horario laboral (Riesgo de seguridad/fraude):
 [!] Alerta 4: Se detectaron 2 registros con IDs de transacción duplicados:
 --- FIN DEL INFORME DE AUDITORÍA ---
+
+> 🔒 **Nota de Seguridad Bancaria:** Este script está diseñado para ejecutarse de manera local (offline) o en servidores internos seguros, garantizando el cumplimiento de las normativas de secreto bancario y evitando la exposición de datos sensibles a la nube pública.
