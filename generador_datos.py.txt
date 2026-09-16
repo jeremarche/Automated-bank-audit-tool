@@ -1,0 +1,104 @@
+from datetime import datetime, timedelta
+from google.colab import files  # Solo si usas Google Colab
+import pandas as pd
+import numpy as np
+
+# Configuración inicial para asegurar variedad
+np.random.seed(42)
+
+cuentas = [
+    "1.1.1.1 Caja General",
+    "1.1.1.2 Caja Chica",
+    "1.1.2.1 Banco Galicia Cta Cte",
+    "1.1.3.1 Clientes - Cuentas por Cobrar",
+    "2.1.1.1 Proveedores Nacionales",
+    "5.1.1.1 Gastos de Librería y Oficina",
+    "4.1.1.1 Ingresos por Ventas",
+]
+
+usuarios = [
+    "cajero_01",
+    "cajero_02",
+    "contador_jp",
+    "admin_sistema",
+    "aux_finanzas",
+]
+
+data = []
+start_date = datetime(2026, 1, 1)
+
+for i in range(1, 501):
+    id_tx = f"TX-{i:04d}"
+    fecha = (start_date + timedelta(days=int(np.random.randint(0, 90)))).strftime(
+        "%Y-%m-%d"
+    )
+
+    # 1. ANOMALÍA: Transacciones fuera de horario laboral (madrugada)
+    if i in [45, 120, 235, 389, 450]:
+        hora = f"{int(np.random.randint(1, 4)):02d}:{int(np.random.randint(0, 59)):02d}:{int(np.random.randint(0, 59)):02d}"
+    else:
+        hora = f"{int(np.random.randint(8, 19)):02d}:{int(np.random.randint(0, 59)):02d}:{int(np.random.randint(0, 59)):02d}"
+
+    cuenta = np.random.choice(cuentas)
+    usuario = np.random.choice(usuarios)
+
+    debe = 0.0
+    haber = 0.0
+    descripcion = "Operación comercial habitual"
+
+    # 2. ANOMALÍA: Montos inusualmente altos en Caja Chica
+    if "Caja Chica" in cuenta and i in [77, 199, 312, 420]:
+        debe = round(float(np.random.uniform(500000.0, 1500000.0)), 2)
+        descripcion = "Gasto operativo urgente de caja chica sin ticket"
+
+    # 3. ANOMALÍA: Desequilibrios contables (Debe != Haber en error de registro)
+    elif i in [55, 142, 288, 360]:
+        debe = round(float(np.random.uniform(10000.0, 80000.0)), 2)
+        # Forzamos un descuadre claro
+        haber = round(debe + float(np.random.uniform(500.0, 5000.0)), 2)
+        descripcion = "Error de tipeo en asiento contable"
+
+    # 4. ANOMALÍA: Asientos duplicados sospechosos
+    elif i in [150, 300]:
+        id_tx = "TX-0100"  # ID repetido de otra transacción
+        debe = 15200.50
+        haber = 0.0
+        descripcion = "Pago duplicado a proveedor externo"
+        usuario = "admin_sistema"
+
+    else:
+        # Transacciones normales balanceadas
+        monto = round(float(np.random.uniform(1000.0, 75000.0)), 2)
+        if np.random.choice([True, False]):
+            debe = monto
+            haber = 0.0
+            descripcion = "Cobro de factura a cliente"
+        else:
+            debe = 0.0
+            haber = monto
+            descripcion = "Pago de servicios y suministros"
+
+    data.append(
+        {
+            "Fecha": fecha,
+            "ID_Transaccion": id_tx,
+            "Cuenta_Contable": cuenta,
+            "Debe": debe,
+            "Haber": haber,
+            "Descripcion": descripcion,
+            "Usuario_Que_Registro": usuario,
+            "Hora": hora,
+        }
+    )
+
+# Crear DataFrame y guardar
+df = pd.DataFrame(data)
+archivo_nombre = "transacciones_banco.csv"
+df.to_csv(archivo_nombre, index=False, encoding="utf-8-sig")
+
+print(
+    f"¡Éxito! Se generó el archivo '{archivo_nombre}' con 500 filas y anomalías ocultas."
+)
+
+# Forzar descarga automática en Google Colab
+files.download(archivo_nombre)

@@ -1,0 +1,108 @@
+import numpy as np
+import pandas as pd
+
+# 1. Cargar el libro mayor simulado
+archivo = "transacciones_banco.csv"
+df = pd.read_csv(archivo)
+
+print(
+    f"--- INFORME DE AUDITORÍA INTERNA AUTOMATIZADA ---\nArchivo analizado: {archivo}"
+)
+print(f"Total de transacciones revisadas: {len(df)}\n")
+
+# 2. REGLA 1: Detección de descuadres contables (Debe != Haber cuando ambos tienen movimiento o errores de partida)
+# Nota: En un libro mayor analítico por línea, buscamos filas donde se registraron montos extraños o errores de tipeo.
+# Vamos a aislar las filas donde el Debe y el Haber tengan diferencias extrañas o donde se haya inyectado el error.
+descuadres = df[
+    (df["Debe"] > 0)
+    & (df["Haber"] > 0)
+    & (df["Debe"] != df["Haber"])
+    | (df["Descripcion"].str.contains("Error de tipeo", case=False, na=False))
+]
+
+print(
+    f"[!] Alerta 1: Se encontraron {len(descuadres)} posibles errores o descuadres contables:"
+)
+if not descuadres.empty:
+    print(
+        descuadres[
+            [
+                "Fecha",
+                "ID_Transaccion",
+                "Cuenta_Contable",
+                "Debe",
+                "Haber",
+                "Descripcion",
+            ]
+        ].to_string(index=False)
+    )
+print("-" * 60)
+
+# 3. REGLA 2: Control de Caja Chica con montos inusualmente altos
+caja_chica_anómala = df[
+    df["Cuenta_Contable"].str.contains("Caja Chica", case=False, na=False)
+    & (df["Debe"] > 100000)
+]
+
+print(
+    f"[!] Alerta 2: Se encontraron {len(caja_chica_anómala)} movimientos sospechosos en Caja Chica (montos excesivos):"
+)
+if not caja_chica_anómala.empty:
+    print(
+        caja_chica_anómala[
+            [
+                "Fecha",
+                "ID_Transaccion",
+                "Cuenta_Contable",
+                "Debe",
+                "Usuario_Que_Registro",
+                "Descripcion",
+            ]
+        ].to_string(index=False)
+    )
+print("-" * 60)
+
+# 4. REGLA 3: Transacciones en horarios no hábiles (fuera de 08:00 a 19:00)
+# Convertimos la columna Hora a formato datetime para comparar
+df["Hora_dt"] = pd.to_datetime(df["Hora"], format="%H:%M:%S", errors="coerce")
+fuera_de_hora = df[
+    (df["Hora_dt"].dt.hour < 8) | (df["Hora_dt"].dt.hour > 19)
+]
+
+print(
+    f"[!] Alerta 3: Se detectaron {len(fuera_de_hora)} transacciones fuera de horario laboral (Riesgo de seguridad/fraude):"
+)
+if not fuera_de_hora.empty:
+    print(
+        fuera_de_hora[
+            [
+                "Fecha",
+                "Hora",
+                "ID_Transaccion",
+                "Usuario_Que_Registro",
+                "Descripcion",
+            ]
+        ].to_string(index=False)
+    )
+print("-" * 60)
+
+# 5. REGLA 4: Asientos duplicados (IDs de transacción repetidos)
+duplicados = df[df.duplicated(subset=["ID_Transaccion"], keep=False)]
+
+print(
+    f"[!] Alerta 4: Se detectaron {len(duplicados)} registros con IDs de transacción duplicados:"
+)
+if not duplicados.empty:
+    print(
+        duplicados[
+            [
+                "Fecha",
+                "ID_Transaccion",
+                "Debe",
+                "Haber",
+                "Usuario_Que_Registro",
+                "Descripcion",
+            ]
+        ].to_string(index=False)
+    )
+print("--- FIN DEL INFORME DE AUDITORÍA ---")
